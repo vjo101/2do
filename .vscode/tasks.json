@@ -1,0 +1,16 @@
+{
+    "version": "2.0.0",
+    "tasks": [
+        {
+            "label": "Run Todo App",
+            "type": "shell",
+            "command": "/home/vjo/Projects/2do/.venv/bin/python",
+            "args": ["main.py"],
+            "group": "build",
+            "problemMatcher": [],
+            "presentation": {
+                "echo": false,
+            }
+        }
+    ]
+}
