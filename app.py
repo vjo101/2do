@@ -10,8 +10,8 @@ class TodoApp(App):
         ("k", "up", "Move Up"),
         ("i", "focus_insert", "focus add"),
         ("escape", "unfocus_insert", "unfocus add"),
-        ("enter", "add", "Add Todo"),
-        (":+q", "quit", "Quit"),
+        ("q", "quit", "Quit"),
+        ("d", "done", "Done"),
     ]
 
     def on_mount(self):
@@ -38,7 +38,7 @@ class TodoApp(App):
         lines = []
         for idx, (_, task, done) in enumerate(todos):
             prefix = "-> " if idx == getattr(self, "selected_index", 0) else "   "
-            status = "[x]" if done else "[ ]"
+            status = "[*]" if done else "[ ]"
             lines.append(f"{prefix}{status} {task}")
         todos_widget.update("\n".join(lines))
         self.todos = todos  # Store for navigation
@@ -61,12 +61,23 @@ class TodoApp(App):
     def action_unfocus_insert(self):
         self.set_focus(None)
 
-    def action_add(self):
-        if self.focused is self.query_one("#input", Input):
-            self.on_button_pressed(self.query_one("#add_btn", Button))
-
     def action_quit(self):
         self.exit()
+    
+    def action_done(self):
+        if not hasattr(self, "todos") or not self.todos:
+            return
+        todo_id = self.todos[self.selected_index][0]
+        conn = sqlite3.connect(DB_PATH)
+        c = conn.cursor()
+        status = int(not self.todos[self.selected_index][2])
+        #print to a file the status and todo_id
+        with open("debug.log", "a") as f:
+            f.write(f"Setting todo_id {todo_id} to status {status}\n")
+        c.execute("UPDATE todos SET done = ? WHERE id = ?", (status, todo_id,))
+        conn.commit()
+        conn.close()
+        self.refresh_todos()
 
     def on_button_pressed(self, event):
         if event.button.id == "add_btn":
@@ -80,4 +91,8 @@ class TodoApp(App):
                 conn.close()
                 input_widget.value = ""
                 self.refresh_todos()
+
+    # def on_input_submitted(self, event: Input.Submitted) -> None:
+    #     if event.input.id == "input":
+    #         self.on_button_pressed(self.query_one("#add_btn", Button))
 
